@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "spacecool",
+    "name": "SpaceSkool",
     "slug": "spacecool",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -34,11 +34,16 @@
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
-      ],
-      "expo-video"
+      ]
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "520a8035-ee8c-428f-b175-e629bf32bac2"
+      }
     }
   }
 }

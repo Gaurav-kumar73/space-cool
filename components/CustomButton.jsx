@@ -1,12 +1,12 @@
-import { StyleSheet, Text, TouchableOpacity } from 'react-native'
-import { s } from 'react-native-size-matters'
+import { ActivityIndicator, StyleSheet, Text, TouchableOpacity } from 'react-native'
+import { s, vs } from 'react-native-size-matters'
 
-const CustomButton = ({title,onPress}) => {
+const CustomButton = ({title,onPress,Loader}) => {
     return (
         <TouchableOpacity onPress={onPress} style={styles.buttonContainer}>
-            <Text style={styles.ButtonText}>
-                {title}
-            </Text>
+            {
+                Loader ? <ActivityIndicator color="#fff" size={'small'} /> : <Text style={styles.ButtonText}>{title}</Text>
+            }
         </TouchableOpacity>
     )
 }
@@ -20,7 +20,8 @@ const styles = StyleSheet.create({
         paddingVertical: 12,
         borderRadius: s(8),
         alignItems: "center",
-        justifyContent: "center"
+        justifyContent: "center",
+        height:vs(40)
     },
     ButtonText: {
         color: "#fff",

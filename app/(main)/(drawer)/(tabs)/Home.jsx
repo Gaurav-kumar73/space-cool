@@ -7,7 +7,6 @@ import Footer from '../../../../components/Footer'
 import ImageViewer from '../../../../components/ImageViewer'
 import WhyChooseComponent from '../../../../components/WhyChooseComponent'
 import { TextData } from '../../../../data'
-
 const Links = TextData.Links;
 
 const Home = () => {

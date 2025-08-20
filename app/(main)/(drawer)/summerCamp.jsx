@@ -1,11 +1,13 @@
 import AntDesign from '@expo/vector-icons/AntDesign';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useState } from 'react';
-import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Dropdown } from 'react-native-element-dropdown';
+import { s, vs } from 'react-native-size-matters';
 import CheckBox from '../../../components/CheckBox';
 import Footer from '../../../components/Footer';
 import Card from '../../../components/card';
+import { useAuth } from '../../../context/DataProvider';
 import { TextData } from '../../../data';
 
 
@@ -33,41 +35,125 @@ export default function summerCamp() {
   const [Email, setEmail] = useState('')
   const [PhoneNo, setPhoneNo] = useState('')
   const [StudentName, setStudentName] = useState('')
-  const [CubeSatsActive, setCubeSatsActive] = useState('')
-  const [DronActive, setDronActive] = useState('')
-  const [StargazingActive, setStargazingActive] = useState('')
   const [value, setValue] = useState(null);
   const [isFocus, setIsFocus] = useState(false);
   const [instruments, setInstruments] = useState([])
   const [TermCondition, setTermCondition] = useState('')
+  const [loader, setLoader] = useState(false)
+  const [firstNameError, setFirstNameError] = useState('')
+  const [lastNameError, setLastNameError] = useState('')
+  const [emailError, setEmailError] = useState('')
+  const [phoneNoError, setPhoneNoError] = useState('')
+  const [studentNameError, setStudentNameError] = useState('')
+  const [gradeError, setGradeError] = useState('')
+  const [termConditionError, setTermConditionError] = useState('')
+  const [IntrestedIn, setIntrestedIn] = useState([])
+  const [enable, setEnable] = useState(false)
+
+  const { summerCampHandle } = useAuth();
 
 
 
-  const SendData = () => {
-    Alert.alert("send data ")
-    console.log("Parent First name:", name)
-    console.log("Parent Last name:", Lastname)
-    console.log("Parent email:", Email)
-    console.log("Parent Phone NO :", PhoneNo)
-    console.log("Student name :", StudentName)
-    console.log("Intrested in :", `${CubeSatsActive}, ${DronActive},${StargazingActive}`)
-    console.log("Greade :", value)
-    console.log("Interested in :", instruments)
-    console.log("Term & Condition :", TermCondition)
+  const EnableButton = () => {
+    setEnable(true)
+  }
 
-    setName('');
-    setLastName('');
-    setEmail('');
-    setPhoneNo('');
-    setStudentName('');
-    setCubeSatsActive('');
-    setDronActive('');
-    setStargazingActive('');
-    setValue(null);
-    setInstruments([]);
-    setTermCondition('')
+  const SendData = async () => {
+    if (!validateFields()) return Alert.alert("Error", "Please fill all the fields correctly.");
+    setLoader(true);
+    let data = {
+      firstname: name,
+      lastname: Lastname,
+      email: Email,
+      phone: PhoneNo,
+      studentName: StudentName,
+      interestedin: IntrestedIn,
+      grade: value,
+      interestedIn: instruments,
+      termCondition: TermCondition
+    }
+    let result = await summerCampHandle(data)
+    if (result) {
+      setLoader(false);
+
+      Alert.alert("Information", 'Your summer camp registration has been submitted successfully.'
+      );
+      setName('');
+      setLastName('');
+      setEmail('');
+      setPhoneNo('');
+      setStudentName('');
+      setIntrestedIn([]);
+      setValue(null);
+      setInstruments([]);
+      setTermCondition('')
+
+    }
+    else {
+      Alert.alert("Error", 'Something went wrong, please try again later.');
+    }
+    setLoader(false);
+  }
+
+  const checkNumber = () => {
+    if (PhoneNo.length < 9) {
+      setPhoneNoError(`Phone number must be 10 digits`);
+      return false;
+
+    }
+    setPhoneNoError('');
+    return true;
 
 
+  }
+
+  const IntrestedFiled = (value) => {
+    if (IntrestedIn.includes(value)) {
+      let newarr = IntrestedIn.filter(item => item !== value);
+      setIntrestedIn(newarr);
+    } else {
+      setIntrestedIn([...IntrestedIn, value]);
+    }
+  }
+
+  const validateFields = () => {
+    if (name === '') {
+      setFirstNameError('First name is required');
+      return false;
+    }
+    if (Lastname === '') {
+      setLastNameError('Last name is required');
+      return false;
+    }
+    if (Email === '') {
+      setEmailError('Email is required');
+      return false;
+    }
+    if (!Email.includes('@') || !Email.includes('.')) {
+      setEmailError('Enter a valid email');
+      return false;
+    }
+    if (PhoneNo === '') {
+      setPhoneNoError('Phone number is required');
+      return false;
+    }
+    if (PhoneNo.length === 9) {
+      setPhoneNoError(`Phone number must be 10 digits`);
+      return false;
+    }
+    if (StudentName === '') {
+      setStudentNameError('Student name is required');
+      return false;
+    }
+    if (value === null) {
+      setGradeError('Grade is required');
+      return false;
+    }
+    if (TermCondition === '') {
+      setTermConditionError('Term & Condition is required');
+      return false;
+    }
+    return true;
   }
   const renderLabel = () => {
     if (value || isFocus) {
@@ -233,65 +319,68 @@ export default function summerCamp() {
                 marginTop: 30,
               }}
             >Registration Form</Text>
-            <Text style={styles.Label}>First name</Text>
-            <TextInput style={styles.TextInput}
+            <Text style={styles.Label}>First name *</Text>
+            <TextInput style={[styles.TextInput, firstNameError ? { borderColor: 'red' } : {}]}
+            editable={!loader}
               placeholder='Parent First name'
               value={name}
-              onChangeText={(txt) => setName(txt)}
+              onChangeText={(txt) => { setName(txt), setFirstNameError('') }}
               placeholderTextColor={'gray'} />
-            <Text style={styles.Label}>Last name</Text>
-            <TextInput style={styles.TextInput}
+            <Text style={styles.errorlabel}>{firstNameError}</Text>
+            <Text style={styles.Label}>Last name *</Text>
+            <TextInput style={[styles.TextInput, lastNameError ? { borderColor: 'red' } : {}]}
+            editable={!loader}
               placeholder='Parent Last name'
               value={Lastname}
-              onChangeText={(txt) => setLastName(txt)}
+              onChangeText={(txt) => { setLastName(txt), setLastNameError('') }}
               placeholderTextColor={'gray'} />
-            <Text style={styles.Label}>Parent's Email</Text>
-            <TextInput style={styles.TextInput}
+            <Text style={styles.errorlabel}>{lastNameError}</Text>
+            <Text style={[styles.Label]}>Parent's Email *</Text>
+            <TextInput style={[styles.TextInput, emailError ? { borderColor: 'red' } : {}]}
+            editable={!loader}
               placeholder='Parent@email.com'
               value={Email}
-              onChangeText={(txt) => setEmail(txt)}
+              onChangeText={(txt) => { setEmail(txt), setEmailError('') }}
               placeholderTextColor={'gray'} />
+            <Text style={styles.errorlabel}>{emailError}</Text>
 
 
-            <Text style={styles.Label}>Phone</Text>
-            <TextInput style={styles.TextInput}
+            <Text style={styles.Label}>Phone *</Text>
+            <TextInput style={[styles.TextInput, phoneNoError ? { borderColor: 'red' } : {}]}
+            editable={!loader}
               value={PhoneNo}
-              onChangeText={(txt) => setPhoneNo(txt)}
+              keyboardType='numeric'
+              maxLength={10}
+              // minLength={10}
+              onChangeText={(txt) => { setPhoneNo(txt), checkNumber() }}
               placeholderTextColor={'gray'} />
+            <Text style={styles.errorlabel}>{phoneNoError}</Text>
 
 
-            <Text style={styles.Label}>Student Full Name</Text>
-            <TextInput style={styles.TextInput}
+            <Text style={styles.Label}>Student Full Name *</Text>
+            <TextInput style={[styles.TextInput, studentNameError ? { borderColor: 'red' } : {}]}
+            editable={!loader}
               value={StudentName}
-              onChangeText={(txt) => setStudentName(txt)}
+              onChangeText={(txt) => { setStudentName(txt), setStudentNameError('') }}
               placeholderTextColor={'gray'} />
+            <Text style={styles.errorlabel}>{studentNameError}</Text>
 
             <Text style={styles.Label}>Interested in(Optional)</Text>
             <View style={{ flexDirection: "row", gap: 20, marginTop: 20 }}>
               <Text
                 onPress={() => {
-                  if (CubeSatsActive == '') {
-                    setCubeSatsActive('CubeSats')
-                  }
-                  else {
-                    setCubeSatsActive('')
-                  }
+                  IntrestedFiled('CubeSats')
                 }}
-                style={[styles.InterestedOption, CubeSatsActive !== '' && {
+                style={[styles.InterestedOption, IntrestedIn.includes('CubeSats') && {
                   backgroundColor: 'rgba(216, 48, 238, 0.07)',
                   borderColor: 'rgba(169, 25, 182, 1)',
                 }]}>CubeSats</Text>
 
 
               <Text onPress={() => {
-                if (DronActive == '') {
-                  setDronActive('Drone Building')
-                }
-                else {
-                  setDronActive('')
-                }
+                IntrestedFiled('Drone Building')
               }}
-                style={[styles.InterestedOption, DronActive !== '' && {
+                style={[styles.InterestedOption, IntrestedIn.includes('Drone Building') && {
                   backgroundColor: 'rgba(216, 48, 238, 0.07)',
                   borderColor: 'rgba(169, 25, 182, 1)',
                 }]}>Drone Building</Text>
@@ -300,23 +389,19 @@ export default function summerCamp() {
 
             <View style={{ flexDirection: "row", gap: 20, marginTop: 20 }}>
               <Text onPress={() => {
-                if (StargazingActive == '') {
-                  setStargazingActive('Stargazing')
-                }
-                else {
-                  setStargazingActive('')
-                }
+                IntrestedFiled('Stargazing')
+
               }}
-                style={[styles.InterestedOption, StargazingActive !== '' && {
+                style={[styles.InterestedOption, IntrestedIn.includes('Stargazing') && {
                   backgroundColor: 'rgba(216, 48, 238, 0.07)',
                   borderColor: 'rgba(169, 25, 182, 1)',
                 }]}>Stargazing</Text>
             </View>
 
             <Text style={styles.Label}>Select Grade *</Text>
-            {renderLabel()}
+            {/* {renderLabel()} */}
             <Dropdown
-              style={[styles.dropdown, isFocus && { borderColor: 'blue' }]}
+              style={[styles.dropdown, gradeError ? { borderColor: "red" } : {}, isFocus && { borderColor: 'blue' }]}
               placeholderStyle={styles.placeholderStyle}
               selectedTextStyle={styles.selectedTextStyle}
               inputSearchStyle={styles.inputSearchStyle}
@@ -332,6 +417,7 @@ export default function summerCamp() {
               onFocus={() => setIsFocus(true)}
               onBlur={() => setIsFocus(false)}
               onChange={item => {
+                setGradeError('');
                 setValue(item.value);
                 setIsFocus(false);
               }}
@@ -344,7 +430,9 @@ export default function summerCamp() {
                 />
               )}
             />
-            <Text style={[styles.Label,{marginBottom:20}]}>Interested In</Text>
+            <Text style={styles.errorlabel}>{gradeError}</Text>
+
+            <Text style={[styles.Label, { marginBottom: 20 }]}>Interested In</Text>
             <CheckBox options={InteretedData}
               checkedValues={instruments}
               onChange={setInstruments}
@@ -353,32 +441,48 @@ export default function summerCamp() {
               onPress={() => {
                 if (TermCondition == '') {
                   setTermCondition('agree')
+                  setTermConditionError('')
+                  EnableButton()
 
                 }
                 else {
                   setTermCondition('')
+                  setEnable(false)
                 }
               }}
             >
-              <MaterialIcons name={TermCondition ? 'check-box' : "check-box-outline-blank"} size={20} color={TermCondition ? 'green' : "black"} />
-              <Text style={{ fontWeight: "700" }}>I agree to the Term & Condition
-                <Text style={{ fontWeight: "400" }}> and acknowledge that the SpaceSkool team may Contact me regarding the Space Simmer Camp. *</Text></Text>
+              <MaterialIcons name={TermCondition ? 'check-box' : "check-box-outline-blank"} size={20} color={termConditionError ? "red" : TermCondition ? 'green' : "black"} />
+              <Text style={[{ fontWeight: "700" }, termConditionError ? { color: "red" } : {}]}>I agree to the Term & Condition
+                <Text style={[{ fontWeight: "400" }, termConditionError ? { color: "red" } : {}]}> and acknowledge that the SpaceSkool team may Contact me regarding the Space Simmer Camp. *</Text></Text>
             </Pressable>
             <TouchableOpacity
+              disabled={!enable}
               onPress={() => SendData()}
-              style={{
+              style={[{
                 alignSelf: "center",
-                backgroundColor: "rgba(4, 73, 138, 1)",
-                paddingHorizontal: 100,
-                paddingVertical: 10,
-                borderRadius: 50,
-                marginTop: 40
-              }}>
-              <Text style={{
-                color: "#fff",
-                fontSize: 16,
-                fontWeight: "600"
-              }}>Submit</Text>
+                justifyContent: "center",
+                alignItems: "center",
+                height: vs(50),
+                width: s(250),
+                borderRadius: s(50),
+                marginTop: vs(40)
+              },
+              enable ? {
+                backgroundColor: "rgba(4, 71, 134, 1)",
+              } : {
+                backgroundColor: "gray",
+              }]}>
+              {
+                loader ?
+                  <ActivityIndicator color="#fff" size={'small'} />
+                  :
+                  <Text style={{
+                    color: "#fff",
+                    fontSize: 16,
+                    fontWeight: "600"
+                  }}>Submit</Text>
+              }
+
             </TouchableOpacity>
           </View>
         </View>
@@ -448,5 +552,11 @@ const styles = StyleSheet.create({
   inputSearchStyle: {
     height: 40,
     fontSize: 16,
+  },
+  errorlabel: {
+    color: 'red',
+    fontSize: s(10),
+    marginStart: s(5)
+
   },
 })

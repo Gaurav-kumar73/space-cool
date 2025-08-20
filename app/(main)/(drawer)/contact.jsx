@@ -1,22 +1,48 @@
 import { useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import Footer from '../../../components/Footer';
+import { useAuth } from '../../../context/DataProvider';
 
 export default function contact() {
 
   const [email, setEmail] = useState('');
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
+  const [loader, setLoader] = useState(false);
+  const [error, setError] = useState('');
+  const { addQearyHandle } = useAuth();
 
 
-
-  const SendHandle = ()=>{
-    Alert.alert("Name",email)
+  const SendHandle = async () => {
+    if (!Validation()) return Alert.alert("Error", "Please fill all the fields correctly.");
+    setLoader(true);
+    // Alert.alert("Name",email)
+    let addQeary = {
+      email: email,
+      subject: subject,
+      message: message
+    }
+    let result = await addQearyHandle(addQeary);
+    // console.log("Result:", result);
     ClearFields();
+    setLoader(false);
+  }
+
+  const Validation = () => {
+    if (email === '' || subject === '' || message === '') {
+      setError('All fields are required');
+      return false;
+    }
+    if (!email.includes('@') || !email.includes('.')) {
+      setError('Please enter a valid email address');
+      return false;
+    }
+    return true;
+
   }
 
 
-  const ClearFields = ()=>{
+  const ClearFields = () => {
     setEmail('');
     setMessage('');
     setSubject('');
@@ -55,32 +81,48 @@ export default function contact() {
             paddingTop: 10
           }}>
             <Text style={[styles.title, { marginStart: 0 }]}>{`Send us a message\nand we’ll get back to you shortly.`}</Text>
+
+            <Text style={{
+              alignSelf: "center",
+              color: "red"
+            }}>{error}</Text>
             <Text style={[styles.title, { fontWeight: "500" }]}>Email *</Text>
             <TextInput
+            
               value={email}
-              onChangeText={(txt) => setEmail(txt)}
+              onChangeText={(txt) => {setEmail(txt),setError('')}}
               placeholder='e.g., email@example.com'
               placeholderTextColor={'#004193'}
               style={styles.Input}
+              editable={!loader}
             />
             <Text style={[styles.title, { fontWeight: "500" }]}>Subject *</Text>
             <TextInput
+            
               value={subject}
-              onChangeText={(txt) => setSubject(txt)}
+              onChangeText={(txt) => {setSubject(txt),setError('')}}
               placeholder='e.g., Support'
               placeholderTextColor={'#004193'}
               style={styles.Input}
+              editable={!loader}
             />
             <Text style={[styles.title, { fontWeight: "500" }]}>Your message *</Text>
             <TextInput
               value={message}
-              onChangeText={(txt) => setMessage(txt)}
+              onChangeText={(txt) => {setMessage(txt),setError('')}}
               placeholder='Enter text here'
               placeholderTextColor={'#004193'}
               style={[styles.Input, { height: 120, textAlignVertical: "top" }]}
+              editable={!loader}
             />
             <Pressable style={styles.SendButton} onPress={SendHandle}>
-              <Text style={styles.ButtonText}>Send</Text>
+              {
+                loader ?
+                  <ActivityIndicator color="#fff" size={'small'} />
+                  :
+                  <Text style={styles.ButtonText}>Send</Text>
+
+              }
             </Pressable>
 
 
@@ -125,8 +167,11 @@ const styles = StyleSheet.create({
   SendButton: {
     alignSelf: "center",
     backgroundColor: "rgb(29,103,205)",
-    paddingHorizontal: 40,
-    paddingVertical: 10,
+
+    height: 50,
+    width: 130,
+    justifyContent: "center",
+    alignItems: "center",
     borderRadius: 10,
     marginVertical: 30,
 

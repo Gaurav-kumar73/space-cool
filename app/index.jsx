@@ -2,7 +2,6 @@ import { Video } from 'expo-av';
 import { useNavigation } from "expo-router";
 import React, { useEffect } from "react";
 import { StatusBar, StyleSheet, Text, View } from "react-native";
-
 export default function Index() {
   // This is a splash screen
   const navigation = useNavigation();
@@ -10,7 +9,7 @@ export default function Index() {
   useEffect(() => {
     const timer = setTimeout(() => {
       navigation.replace("(main)");
-    }, 4000);
+    }, 1000);
 
     return () => clearTimeout(timer);
   }, [navigation]);

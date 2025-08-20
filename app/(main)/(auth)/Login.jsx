@@ -13,8 +13,8 @@ const Login = () => {
     const [password, setPassword] = useState('');
     const [emailError, setEmailError] = useState('')
     const [passwordVisibal, setPasswordVisibal] = useState(true)
-
-    const { setAuth } = useAuth();
+    const [Loader, setLoader] = useState(false);
+    const { Login } = useAuth();
 
     const navigation = useNavigation();
 
@@ -37,16 +37,19 @@ const Login = () => {
         setEmailError('')
     }
 
-    const LoginHandler = () => {
-        if (validateForm()) {
+    const LoginHandler = async () => {
+        if (!validateForm()) return;
+        setLoader(true);
+        let result = await Login(email, password);
+        setLoader(false);
+        
+        if (result === true) {
             clearFileds();
-            navigation.navigate("(drawer)")
-            Alert.alert("Login");
-
-            // setAuth(true)
-
+            navigation.navigate("(drawer)");
         }
-
+        else{
+            setEmailError(result);
+        }
     }
 
     return (
@@ -59,17 +62,19 @@ const Login = () => {
             <Text style={styles.Error}>{emailError}</Text>
 
             <TextInput
+                editable={!Loader}
                 value={email}
                 onChangeText={(txt) => { setEmail(txt), setEmailError('') }}
                 placeholder='Email'
-                style={[styles.TextInput]} />
-            <View style={{ width: "100%", marginBottom: vs(15), marginTop: vs(15) }}>
+                style={[styles.TextInput,Loader ? {backgroundColor:'#b9b9b9cb'} : {}]} />
+            <View style={{ width: "100%", marginTop: vs(15) }}>
                 <TextInput
+                editable={!Loader}
                     secureTextEntry={passwordVisibal}
                     value={password}
                     onChangeText={(txt) => setPassword(txt)}
                     placeholder='Password'
-                    style={[styles.TextInput]} />
+                    style={[styles.TextInput,Loader? {backgroundColor:'#b9b9b9cb'} : {}]} />
                 <Pressable style={styles.EyeContainer} onPress={() => setPasswordVisibal(!passwordVisibal)}>
                     {passwordVisibal ? <Feather name="eye-off" size={20} color='gray' />
                         :
@@ -79,8 +84,13 @@ const Login = () => {
                 </Pressable>
 
             </View>
-            <CustomButton title={"Login"} onPress={LoginHandler} />
-            <Text style={[styles.LoginLink, { marginTop: vs(95) }]}>or Login with</Text>
+
+            {/*  Forget password */}
+            <Text style={styles.forgetPassword} onPress={() => {
+                navigation.navigate("ResetPassword")
+            }}>Forget Password</Text>
+            <CustomButton title={"Login"} onPress={LoginHandler} Loader={Loader} />
+            <Text style={[styles.LoginLink, { marginTop: vs(75) }]}>or Login with</Text>
             <View style={styles.SocialIconContainer}>
                 <SocialCircle bg={"#3f5992"} icon={<FaceBookIcon />} onPress={() => Alert.alert("Login with FaceBook")} />
                 <SocialCircle bg={"#d84c3d"} icon={<GoogleIcon />} onPress={() => Alert.alert("Login with Gmail")} />
@@ -167,6 +177,14 @@ const styles = StyleSheet.create({
         height: "100%",
         justifyContent: "center",
         // backgroundColor:"red"
+    },
+    forgetPassword: {
+        color: "#090344",
+        fontSize: 12,
+        alignSelf: "flex-end",
+        marginTop: vs(5),
+        marginBottom: vs(10),
+        marginEnd: s(10)
     }
 
 })

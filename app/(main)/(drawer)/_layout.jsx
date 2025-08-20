@@ -2,18 +2,28 @@ import FontAwesome from '@expo/vector-icons/FontAwesome';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import SimpleLineIcons from '@expo/vector-icons/SimpleLineIcons';
 import { DrawerContentScrollView, DrawerItem } from '@react-navigation/drawer';
-import { router, usePathname } from 'expo-router';
+import { router, useNavigation, usePathname } from 'expo-router';
 import { Drawer } from 'expo-router/drawer';
-import { StyleSheet } from 'react-native';
+import { Alert, StyleSheet } from 'react-native';
+import { useAuth } from '../../../context/DataProvider';
 
 export default function Layout() {
   const CustomDrawerContent = (props) => {
+    const { Logout } = useAuth();
+    const navigation = useNavigation();
     const pathname = usePathname();
 
     // useEffect(() => {
     //   console.log(pathname)
     // }, [pathname])
+
+    const logoutHandler = async () => {
+      Logout();
+      navigation.navigate("(auth)");
+
+    }
     return (
       <DrawerContentScrollView {...props} >
         <DrawerItem
@@ -29,7 +39,7 @@ export default function Layout() {
           label={"Home"}
           labelStyle={[styles.navItem, { color: pathname == '/Home' ? "#fff" : '#000' }]} />
 
-       
+
         {/* <DrawerItem
           style={{ backgroundColor: pathname == '/about' ? "#333" : '#fff' }}
           icon={({ color, size }) =>
@@ -110,6 +120,31 @@ export default function Layout() {
             router.push('summerCamp')
           }}
         />
+        <DrawerItem
+          icon={({ color, size }) =>
+          (<SimpleLineIcons
+            name="logout"
+            size={size}
+            color={'#000'} />)}
+
+          label={"Logout "}
+          labelStyle={[styles.navItem, { color: "#000" }]}
+          onPress={() => {
+            Alert.alert("Logout", "Are you sure you want to logout?", [
+              {
+                text: "Cancel",
+                style: "cancel"
+              },
+              {
+                text: "Logout",
+                onPress: () => {
+                  logoutHandler();
+                }
+              }
+            ]);
+          }}
+        />
+
 
 
 
@@ -145,6 +180,6 @@ const styles = StyleSheet.create({
   drawer: {
     backgroundColor: "red",
     width: 300,
-    
+
   }
 })

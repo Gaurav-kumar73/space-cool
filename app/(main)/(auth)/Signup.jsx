@@ -5,6 +5,7 @@ import { s, vs } from 'react-native-size-matters'
 import CustomButton from '../../../components/CustomButton'
 import SocialCircle from '../../../components/SocialCircle'
 import { AppleIcon, FaceBookIcon, GoogleIcon } from '../../../constant/Icons'
+import { useAuth } from '../../../context/DataProvider'
 
 const Signup = () => {
     const [email, setEmail] = useState('');
@@ -12,32 +13,86 @@ const Signup = () => {
     const [confirmPassword, setConfirmPassword] = useState('');
     const [passwordError, setPasswordError] = useState('')
     const [emailError, setEmailError] = useState('')
-    const [errorColor, setErrorColor] = useState(false);
+    const [strength, setStrength] = useState('');
+    const [errorColor, setErrorColor] = useState('');
+    const [Loader, setLoader] = useState(false);
 
     const navigation = useNavigation();
+    const { signUpaccount } = useAuth();
 
 
-
-    const checkPassword = () => {
-        if (password.trim() !== confirmPassword.trim()) {
-            setPasswordError('Passwords do not match');
+    const handleConfirmPasswordChange = (text) => {
+        if (!text) {
+            setConfirmPassword('');
+            setPasswordError('');
             setErrorColor(false);
+            return;
+        }
+        setConfirmPassword(text);
+        if (password === text) {
+            setPasswordError('Passwords match');
+            setErrorColor("rgba(67, 172, 26, 1)")
         }
         else {
-            setPasswordError("Password Match")
-            setErrorColor(true);
+            setPasswordError('Passwords do not match');
+            setErrorColor("red");
         }
 
+
+
+    };
+
+    const checkPasswordStrength = (input) => {
+        setPassword(input);
+
+        if (!input) {
+            setPassword('')
+            setStrength('')
+            return;
+        }
+
+        let score = 0;
+        if (input.length >= 12) score += 3;
+        else if (input.length >= 8) score += 2;
+        else if (input.length >= 5) score += 1;
+
+        if (/[A-Z]/.test(input)) score += 1;
+
+        if (/[a-z]/.test(input)) score += 1;
+
+        if (/\d/.test(input)) score += 1;
+
+        // Contains special characters
+        if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~`]/.test(input)) score += 2;
+
+        if (score >= 7) {
+            setStrength('strong');
+        } else if (score >= 4) {
+            setStrength('normal');
+        } else {
+            setStrength('weak');
+        }
     }
+
+    const getStrengthColor = () => {
+        switch (strength) {
+            case 'weak':
+                return '#ff4444';
+            case 'normal':
+                return '#ffaa00';
+            case 'strong':
+                return '#00aa00';
+            default:
+                return '#eee';
+        }
+    };
+
+
     const validateForm = () => {
         if (!email || !password || !confirmPassword) {
             setEmailError('All fields are required');
             return false;
         }
-        // if (password !== confirmPassword) {
-        //     setPasswordError('Passwords do not match');
-        //     return false;
-        // }
         if (password.length < 6) {
             setPasswordError('Password must be at least 6 characters');
             setErrorColor(false)
@@ -59,57 +114,78 @@ const Signup = () => {
         setErrorColor(false)
     }
 
-    const singupHandler = () => {
-        if (validateForm()) {
-            Alert.alert("Registed");
+    const singupHandler = async () => {
+        if (!validateForm()) return;
+        setLoader(true);
+        const result = await signUpaccount(email, password)
+        // console.log(result)
+        setLoader(false);
+        if (result === true) {
+            Alert.alert(
+                'Account Created',
+                'A verification email has been sent to your email address. Please verify your email before logging in.',
+                [{ text: 'OK', onPress: () => navigation.navigate('Login') }]
+            );
             clearFileds();
         }
-        // else{
-        //     Alert.alert("Fill all fileds ")
-        //     clearFileds();
-        // }
+        else {
+            Alert.alert("Error", result);
+            setEmailError(result);
+        }
     }
 
     return (
         <SafeAreaView style={styles.container}>
+            {/* <KeyboardAvoidingView style={{flex:1,width:"100%"}} behavior="padding"> */}
 
-            <Image source={require("../../../assets/images/spaceLogo.png")}
-                style={styles.Logo}
-            />
-            <Text style={[styles.Title]}>Sign Up</Text>
-            <Text style={styles.Error}>{emailError}</Text>
+                <Image source={require("../../../assets/images/spaceLogo.png")}
+                    style={styles.Logo}
+                />
+                <Text style={[styles.Title]}>Sign Up</Text>
+                <Text style={styles.Error}>{emailError}</Text>
 
-            <TextInput
-                value={email}
-                onChangeText={(txt) => { setEmail(txt), setEmailError('') }}
-                placeholder='Email'
-                style={[styles.TextInput]} />
-            <TextInput
-                value={password}
-                onChangeText={(txt) => setPassword(txt)}
-                placeholder='Password'
-                style={[styles.TextInput, { marginTop: vs(15) }]} />
-            <Text style={[styles.Error, { color: errorColor ? "rgba(67, 172, 26, 1)" : "red" }]}>{passwordError}</Text>
-            <TextInput
-                value={confirmPassword}
-                onChangeText={(txt) => { setConfirmPassword(txt), checkPassword() }}
+                <TextInput
 
-                placeholder='Confirm Password'
-                style={[styles.TextInput, { marginBottom: vs(20) }]} />
+                    editable={!Loader}
+                    value={email}
+                    onChangeText={(txt) => { setEmail(txt), setEmailError('') }}
+                    placeholder='Email'
+                    style={[styles.TextInput, Loader && { backgroundColor: '#b9b9b9cb' }]} />
+                <TextInput
+                    secureTextEntry
 
-            <CustomButton title={"Sign Up"} onPress={singupHandler} />
-            <Text style={styles.LoginLink}>or Sign up with</Text>
-            <View style={styles.SocialIconContainer}>
-                <SocialCircle bg={"#3f5992"} icon={<FaceBookIcon onPress={() => Alert.alert("Signup with FaceBook")} />} />
-                <SocialCircle bg={"#d84c3d"} icon={<GoogleIcon />} onPress={() => Alert.alert("Signup with Gmail")} />
-                <SocialCircle bg={"#020202"} icon={<AppleIcon onPress={() => Alert.alert("Signup with Apple Id")} />} />
-            </View>
-            <Text style={styles.LoginLink}>
-                Already have an account?
-                <Text onPress={() => navigation.navigate("Login")} style={styles.LinkText}>
-                    Log in
+                    editable={!Loader}
+                    value={password}
+                    onChangeText={(txt) => checkPasswordStrength(txt)}
+                    placeholder='Password'
+                    style={[styles.TextInput, Loader && { backgroundColor: '#b9b9b9cb' }, { marginTop: vs(15) }]} />
+                <Text style={[styles.Error, { color: getStrengthColor(), marginBottom: 5 }]}>{strength}</Text>
+                <TextInput
+                    secureTextEntry
+                    editable={!Loader}
+                    value={confirmPassword}
+                    onChangeText={(txt) => handleConfirmPasswordChange(txt)}
+
+                    placeholder='Confirm Password'
+                    style={[styles.TextInput, Loader && { backgroundColor: '#b9b9b9cb' }]} />
+                <Text style={[styles.Error, { color: errorColor, marginBottom: 5 }]}>{passwordError}</Text>
+
+
+                <CustomButton title={"Sign Up"} onPress={singupHandler} Loader={Loader} />
+                <Text style={styles.LoginLink}>or Sign up with</Text>
+                <View style={styles.SocialIconContainer}>
+                    <SocialCircle bg={"#3f5992"} icon={<FaceBookIcon onPress={() => Alert.alert("Signup with FaceBook")} />} />
+                    <SocialCircle bg={"#d84c3d"} icon={<GoogleIcon />} onPress={() => Alert.alert("Signup with Gmail")} />
+                    <SocialCircle bg={"#020202"} icon={<AppleIcon onPress={() => Alert.alert("Signup with Apple Id")} />} />
+                </View>
+                <Text style={styles.LoginLink}>
+                    Already have an account?
+                    <Text onPress={() => navigation.navigate("Login")} style={styles.LinkText}>
+                        Log in
+                    </Text>
                 </Text>
-            </Text>
+            {/* </KeyboardAvoidingView> */}
+
         </SafeAreaView>
     )
 }
